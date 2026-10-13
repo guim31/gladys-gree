@@ -1,77 +1,105 @@
+// -----------------------------------------------------------------------------
+// The `overview` dashboard widget: every unit added to Gladys on one card,
+// within the core budget, and its "turn all off" button.
+// -----------------------------------------------------------------------------
+
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { validateWidgetContent } from '@gladysassistant/integration-sdk';
-import { createFakeGladys } from '@gladysassistant/integration-sdk/testing';
-import { buildDiscoveredDevices } from '../src/devices/index.js';
-import { simulateLanSession } from '../src/devices/plug.js';
-import { DEMO_STATUS_WIDGET, WIDGETS, refreshWidgets } from '../src/widgets.js';
-import { normalizeConfig } from '../src/config.js';
+import { TEXT } from '../src/widgets.js';
+import {
+  CLASSIC,
+  FAHRENHEIT,
+  FakeGree,
+  NO_SENSOR,
+  RECENT,
+  createAll,
+  createWorld,
+} from './helpers/world.js';
 
-const gladys = createFakeGladys();
-const config = normalizeConfig();
-const demoStatus = WIDGETS[DEMO_STATUS_WIDGET];
+async function content(world, language = 'en') {
+  const ack = await world.fake.widgetGet('overview', { settings: {}, language, units: 'metric' });
+  assert.equal(ack.success, true, ack.error);
+  const result = ack.data.content ?? ack.data;
+  assert.deepEqual(validateWidgetContent(result), [], 'rendered exactly as sent');
+  return result;
+}
 
-// What the SDK passes to onWidgetGet, plus the config index.js adds.
-const getContent = (cfg = config) =>
-  demoStatus.get(gladys, { settings: {}, language: 'en', units: 'metric', config: cfg });
+const statusOf = (result) => result.components.find((component) => component.type === 'status');
+const buttons = (result) => result.components.filter((component) => component.type === 'button');
 
-test('the demo_status content is rendered exactly as sent', async () => {
-  // [] = nothing the core would drop, truncate or trim to the content budget.
-  assert.deepEqual(validateWidgetContent(await getContent()), []);
-});
+test('every unit: mode, setpoint and room temperature, off, or not answering', async (t) => {
+  const units = [
+    new FakeGree(CLASSIC, '192.0.2.10'),
+    new FakeGree(RECENT, '192.0.2.11'),
+    new FakeGree(NO_SENSOR, '192.0.2.12'),
+    new FakeGree(FAHRENHEIT, '192.0.2.13'),
+  ];
+  const world = await createWorld({ units });
+  t.after(() => world.app.stop());
+  await createAll(world);
+  units[3].online = false;
+  await world.hub.pollAll();
+  await world.hub.pollAll();
 
-test('the degraded plug connection content is valid too', async () => {
-  simulateLanSession(false);
-  try {
-    const content = await getContent();
-    assert.deepEqual(validateWidgetContent(content), []);
-    const status = content.components.find((component) => component.type === 'status');
-    assert.ok(
-      status.items.some((item) => item.color === 'warning'),
-      'degraded shows a warning',
-    );
-  } finally {
-    simulateLanSession(true);
-  }
-});
-
-test('the live tiles reference features the integration publishes', async () => {
-  const featureIds = new Set(
-    buildDiscoveredDevices(gladys, config).flatMap((device) =>
-      device.features.map((feature) => feature.external_id),
-    ),
+  const fr = await content(world, 'fr');
+  assert.equal(fr.components[0].text, '2 / 4 en marche');
+  assert.deepEqual(
+    statusOf(fr).items.map((item) => [item.label, item.value, item.color]),
+    [
+      ['Gree 000001', 'Froid · 24 °C · 25 °C', 'info'],
+      ['Gree 000003', 'Arrêt', 'neutral'],
+      ['Gree Chambre', 'Ne répond pas', 'danger'],
+      ['Gree Salon', 'Chaud · 21 °C · 24 °C', 'warning'],
+    ],
   );
-  const liveTiles = (await getContent()).components.filter((c) => c.device_feature);
-  assert.ok(liveTiles.length > 0, 'the template demonstrates a device-bound tile');
-  for (const tile of liveTiles) {
-    assert.ok(featureIds.has(tile.device_feature), `unknown feature ${tile.device_feature}`);
-  }
-});
-
-test('every button action of the content is handled and answers a short toast', async () => {
-  const buttons = (await getContent()).components.filter((c) => c.type === 'button' && c.action);
-  assert.ok(buttons.length > 0, 'the template demonstrates a widget action');
-  for (const { action } of buttons) {
-    const message = await demoStatus.action(gladys, {
-      actionKey: action.key,
-      params: action.params ?? {},
-      settings: {},
-      config,
-    });
-    assert.ok(message.en, 'the toast carries at least the mandatory `en` text');
-    assert.ok(message.en.length <= 200, 'toasts are capped at 200 characters');
-  }
-});
-
-test('an unknown widget action fails, so the user sees the error', async () => {
-  await assert.rejects(
-    demoStatus.action(gladys, { actionKey: 'unknown', params: {}, settings: {}, config }),
-    /Unknown widget action/,
+  assert.deepEqual(
+    buttons(fr).map((button) => [button.label, button.action.key]),
+    [[TEXT.allOff.fr, 'all_off']],
   );
+  const de = await content(world, 'de');
+  assert.equal(statusOf(de).items[0].value, 'Kühlen · 24 °C · 25 °C');
 });
 
-test('refreshWidgets nudges every widget', () => {
-  const fresh = createFakeGladys();
-  refreshWidgets(fresh);
-  assert.deepEqual(fresh.fake.widgetRefreshes, Object.keys(WIDGETS));
+test('the button turns every running unit off, in one tap', async (t) => {
+  const units = [new FakeGree(CLASSIC, '192.0.2.10'), new FakeGree(RECENT, '192.0.2.11')];
+  const world = await createWorld({ units });
+  t.after(() => world.app.stop());
+  await createAll(world);
+  const ack = await world.fake.widgetAction('overview', 'all_off', {}, { settings: {} });
+  assert.equal(ack.success, true, ack.error);
+  assert.equal(ack.data.message.fr, 'Climatiseurs éteints : 2');
+  assert.deepEqual(
+    units.map((unit) => unit.props.Pow),
+    [0, 0],
+  );
+  const after = await content(world);
+  assert.equal(after.components[0].text, '0 / 2 running');
+  assert.deepEqual(buttons(after), [], 'nothing left to turn off');
+  // The trigger is never fired by Gladys' own commands.
+  await world.hub.pollAll();
+  await world.hub.idle();
+  assert.equal(world.fake.sceneEvents.length, 0);
+});
+
+test('no unit added yet: a sentence that says where to add them', async (t) => {
+  const world = await createWorld();
+  t.after(() => world.app.stop());
+  const result = await content(world, 'es');
+  assert.deepEqual(result.components, [{ type: 'text', variant: 'body', text: TEXT.none.es }]);
+});
+
+test('the widget is nudged when a state it shows changes, not for the others', async (t) => {
+  const unit = new FakeGree(CLASSIC, '192.0.2.10');
+  const world = await createWorld({ units: [unit] });
+  t.after(() => world.app.stop());
+  await createAll(world);
+  const count = () => world.fake.widgetRefreshes.length;
+  const before = count();
+  unit.props.Lig = 0;
+  await world.hub.pollAll();
+  assert.equal(count(), before, 'the display light is not on the card');
+  unit.props.SetTem = 26;
+  await world.hub.pollAll();
+  assert.equal(count(), before + 1);
 });

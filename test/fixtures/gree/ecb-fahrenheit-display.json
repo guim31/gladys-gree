@@ -1,0 +1,39 @@
+{
+  "description": "Unit displaying Fahrenheit (TemUn 1): the setpoint still travels in Celsius, TemRec picks the half-degree of Fahrenheit. Dry mode, quiet fan, partial vertical swing (8).",
+  "cipher": "ecb",
+  "dev": {
+    "t": "dev",
+    "cid": "02ab00000004",
+    "bc": "gree",
+    "brand": "gree",
+    "catalog": "gree",
+    "mac": "02ab00000004",
+    "mid": "10001",
+    "model": "gree",
+    "name": "Chambre",
+    "series": "gree",
+    "vender": "1",
+    "ver": "V1.2.1",
+    "lock": 0
+  },
+  "hid": "362001000004+U-WB05RT13V1.21.bin",
+  "status": {
+    "Pow": 1,
+    "Mod": 2,
+    "SetTem": 22,
+    "TemUn": 1,
+    "TemRec": 1,
+    "TemSen": 63,
+    "WdSpd": 1,
+    "Tur": 0,
+    "Quiet": 2,
+    "SwUpDn": 8,
+    "SwingLfRig": 4,
+    "Lig": 0,
+    "SvSt": 1,
+    "StHt": 0,
+    "Blo": 1,
+    "SwhSlp": 1,
+    "Health": 0
+  }
+}

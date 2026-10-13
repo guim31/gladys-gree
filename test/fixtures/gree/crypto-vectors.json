@@ -1,0 +1,13 @@
+{
+  "description": "Known-answer vectors made with the Python 'cryptography' package (an implementation independent of node:crypto): the pack 'plain', serialized without spaces, encrypted with the generic keys. ECB with PKCS#7 padding; GCM with the protocol nonce and associated data, its 16-byte tag apart.",
+  "plain": {
+    "t": "dev",
+    "cid": "f4911e000001",
+    "mac": "f4911e000001",
+    "name": "Salon",
+    "ver": "V1.2.1"
+  },
+  "ecb": "LP24Ek0OaYogxs3iQLjL4OXSQWIuy9pk2bVVBlZTI4/JQ3giOoP6uxNSgx4FlWgL1+Lf1jqslYRX1fLskJpkB1eTk0qJVWqd4Dy4bAstwVRW60dvdFmosRdfq+nc+02F",
+  "gcm": "JtoKliwtrZWlpNCVOSARFZVj7tcb0xajMFRkDerahOTTe2wMz1t8LNys5r3BWtWO06+hEIqtYrcbp5jQYp2V2u6Rj0D4Kws5Mst2a7/iJtUXuLs=",
+  "tag": "tk2sB9/ukin/lMVqrrScVw=="
+}

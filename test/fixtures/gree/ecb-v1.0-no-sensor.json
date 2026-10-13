@@ -1,0 +1,35 @@
+{
+  "description": "Older unit without indoor sensor (TemSen 0), keeping the app's default name (its MAC digits), without energy saving, frost guard, horizontal swing nor health; switched off.",
+  "cipher": "ecb",
+  "dev": {
+    "t": "dev",
+    "cid": "02ab00000003",
+    "bc": "gree",
+    "brand": "gree",
+    "catalog": "gree",
+    "mac": "02ab00000003",
+    "mid": "10001",
+    "model": "gree",
+    "name": "1e3c6a7b",
+    "series": "gree",
+    "vender": "1",
+    "ver": "V1.0.4",
+    "lock": 0
+  },
+  "hid": "",
+  "status": {
+    "Pow": 0,
+    "Mod": 0,
+    "SetTem": 25,
+    "TemUn": 0,
+    "TemRec": 0,
+    "TemSen": 0,
+    "WdSpd": 0,
+    "Tur": 0,
+    "Quiet": 0,
+    "SwUpDn": 0,
+    "Lig": 1,
+    "Blo": 0,
+    "SwhSlp": 0
+  }
+}

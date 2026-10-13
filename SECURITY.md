@@ -30,6 +30,20 @@ Gladys before reporting a problem.
 
 In scope: the code of this repository and the Docker image it publishes.
 
+What the integration stores and sends:
+
+- `/data/gree-state.json` (mode 600): for each air conditioner, its MAC and IP
+  addresses, the name given in the Gree+ app, its generation of encryption
+  and the key it gave at pairing. The key only opens the local protocol of
+  that unit; it is never written in the logs.
+- The configuration holds no secret: IP addresses, refresh interval, beep
+  option, language.
+- Network: UDP port 7000 on the local network only, to the units (unicast)
+  and, through the Gladys core, the discovery broadcast. Nothing goes to the
+  internet. The protocol of the units is the vendor's: anyone on the local
+  network can pair with a unit the same way, which is outside the control of
+  this integration.
+
 Out of scope: Gladys Assistant itself (see its
 [security policy](https://github.com/GladysAssistant/Gladys/security/policy)),
-and the third-party services and devices the integration talks to.
+and the air conditioners, their firmware and the Gree+ app.
