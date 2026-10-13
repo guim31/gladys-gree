@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-13
+
 ### Added
 
 - Gree air conditioners, and the Gree units sold under other brands (set up
@@ -32,4 +34,5 @@ the notes of the version's GitHub Release.
 - An option to ask the units not to beep at Gladys' commands.
 - Texts and documentation in English, French, German and Spanish.
 
-[Unreleased]: https://github.com/guim31/gladys-gree/commits/main
+[Unreleased]: https://github.com/guim31/gladys-gree/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/guim31/gladys-gree/releases/tag/v1.0.1

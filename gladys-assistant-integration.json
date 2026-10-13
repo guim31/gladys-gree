@@ -8,8 +8,8 @@
     "de": "Gree-Klimageräte und Partnermarken im lokalen Netzwerk: Modus, Solltemperatur, Lüfter.",
     "es": "Aires acondicionados Gree y marcas asociadas en la red local: modo, temperatura, ventilador."
   },
-  "version": "1.0.0",
-  "docker_image": "ghcr.io/guim31/gladys-gree:1.0.0",
+  "version": "1.0.1",
+  "docker_image": "ghcr.io/guim31/gladys-gree:1.0.1",
   "gladys_version": ">=5.1.0",
   "cover_image": "https://raw.githubusercontent.com/guim31/gladys-gree/main/cover.png",
   "categories": ["climate"],
