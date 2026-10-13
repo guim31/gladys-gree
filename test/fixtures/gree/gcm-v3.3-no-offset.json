@@ -1,0 +1,37 @@
+{
+  "description": "Recent firmware (AES-GCM): indoor sensor without offset (24 = 24 °C), no horizontal swing nor health function, named in the Gree+ app, heating at 21 °C.",
+  "cipher": "gcm",
+  "dev": {
+    "t": "dev",
+    "cid": "02ab00000002",
+    "bc": "gree",
+    "brand": "gree",
+    "catalog": "gree",
+    "mac": "02ab00000002",
+    "mid": "10001",
+    "model": "gree",
+    "name": "Salon",
+    "series": "gree",
+    "vender": "1",
+    "ver": "V3.3.1",
+    "lock": 0
+  },
+  "hid": "362001000002+U-CS532AE(LT)V3.31.bin",
+  "status": {
+    "Pow": 1,
+    "Mod": 4,
+    "SetTem": 21,
+    "TemUn": 0,
+    "TemRec": 0,
+    "TemSen": 24,
+    "WdSpd": 3,
+    "Tur": 0,
+    "Quiet": 0,
+    "SwUpDn": 0,
+    "Lig": 1,
+    "SvSt": 0,
+    "StHt": 0,
+    "Blo": 0,
+    "SwhSlp": 0
+  }
+}

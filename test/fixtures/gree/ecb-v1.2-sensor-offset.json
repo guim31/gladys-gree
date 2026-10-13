@@ -1,0 +1,39 @@
+{
+  "description": "Classic Wi-Fi module (AES-ECB), every function, indoor sensor with the +40 offset (65 = 25 °C), cooling at 24 °C.",
+  "cipher": "ecb",
+  "dev": {
+    "t": "dev",
+    "cid": "02ab00000001",
+    "bc": "gree",
+    "brand": "gree",
+    "catalog": "gree",
+    "mac": "02ab00000001",
+    "mid": "10001",
+    "model": "gree",
+    "name": "",
+    "series": "gree",
+    "vender": "1",
+    "ver": "V1.2.1",
+    "lock": 0
+  },
+  "hid": "362001000001+U-WB05RT13V1.21.bin",
+  "status": {
+    "Pow": 1,
+    "Mod": 1,
+    "SetTem": 24,
+    "TemUn": 0,
+    "TemRec": 0,
+    "TemSen": 65,
+    "WdSpd": 0,
+    "Tur": 0,
+    "Quiet": 0,
+    "SwUpDn": 1,
+    "SwingLfRig": 0,
+    "Lig": 1,
+    "SvSt": 0,
+    "StHt": 0,
+    "Blo": 1,
+    "SwhSlp": 0,
+    "Health": 1
+  }
+}

@@ -31,16 +31,26 @@ pushing.
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
+index.js                          SDK wiring only (registerHandlers + shutdown)
+src/app.js                        every SDK handler, wired to the hub (the tests use it too)
+src/hub.js                        GreeHub: discovery, pairing, polling timer, states, commands, trigger, /data
+src/devices.js                    unit -> Gladys device: features, names (4 languages), values, commands
+src/discovery.js                  discovery broadcast (through the core) and its replies
+src/gree/crypto.js                AES-128 ECB and GCM packs, generic keys
+src/gree/protocol.js              messages (scan, bind, status, cmd), property names, conversions
+src/gree/transport.js             UDP client: one socket, retries, one exchange at a time per unit
 src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+src/widgets.js                    dashboard widget `overview` (manifest `widgets`)
+src/texts.js                      connection status, errors, "Search" report, four languages
+src/problems.js                   repeated failures logged once (start and end)
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
+src/store.js                      /data/gree-state.json (units, keys; atomic writes, mode 600)
+scripts/probe.mjs                 read-only probe of real units from a machine of the LAN
 gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
-test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (en and fr mandatory)
+test/                             node --test, against the SDK's fake Gladys and simulated units
+test/helpers/fakeGree.js          simulated Gree units on a fake UDP network
+test/fixtures/gree/               unit fixtures (built from the protocol docs) and crypto vectors
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,8 +80,10 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** is in four languages (English, French, German with
+  "du", Spanish with "usted"): manifest texts, action, error and widget
+  messages, feature and option names, and `docs/{en,fr,de,es}.md` with the same
+  sections. `test/i18n.test.js` checks them.
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -233,3 +245,46 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+## Gree (gladys-gree)
+
+**Protocole** (lu dans `tomikaa87/gree-remote` et `cmroche/greeclimate`, tous deux GPL-3.0 : lus pour
+comprendre, rien de recopié ; l'intégration Home Assistant `gree`, Apache 2.0, pour les fonctions)
+
+- JSON sur UDP **7000**. `{"t":"scan"}` en clair → `pack` « dev » (MAC, nom, version) chiffré avec la
+  **clé générique** ; `bind` (clé générique, `i: 1`) → « bindok » avec la clé propre de l'unité ;
+  `status` (`cols`) → « dat » (`cols`/`dat`) ; `cmd` (`opt`/`p`) → « res » (`val`, ou `p` seul sur
+  certains firmwares). Une requête illisible ne reçoit **aucune réponse** sur la plupart des
+  firmwares : un délai dépassé d'une unité qui répond encore au scan = clé changée → nouvel appairage
+  (`GreeHub.withKey`).
+- Deux générations : **AES-128-ECB** (PKCS#7 ; certains firmwares remplissent de zéros : on coupe
+  après le dernier `}`) et **AES-128-GCM** (nonce et AAD fixes, `tag` dans l'enveloppe). La clé
+  générique qui ouvre la réponse au scan dit la génération. Chiffrement vérifié octet pour octet
+  contre Python `cryptography` (`test/fixtures/gree/crypto-vectors.json`).
+- `Mod` Gree : 0 auto, 1 froid, **2 déshumidification, 3 ventilation, 4 chaud** ; Gladys `AC_MODE` :
+  0 auto, 1 froid, 2 chaud, 3 déshumidification, 4 ventilation. `WdSpd` 0-5 = `AC_FAN_SPEED` 0-5 ;
+  `Quiet` (≠ 0) et `Tur` publiés en 6 et 7 (QUIET, TURBO) ; on écrit `Quiet: 2` comme l'appli.
+  `SwUpDn`/`SwingLfRig` 0-6 = `AC_SWING_*` 0-6 ; balayages partiels 7-11 lus comme « balayage ».
+- `TemSen` : **+40** sur la plupart des firmwares, sans décalage sur certains récents ; 0 = pas de
+  sonde. Une pièce n'est ni sous 0 °C ni au-dessus de 40 °C : ≥ 40 → décalé. `SetTem` reste en °C
+  même quand `TemUn` = 1 (affichage °F) : on renvoie `TemUn` tel quel et `TemRec: 0`.
+- Bip : `Buzzer_ON_OFF: 1` (anciens) et `BuzzerCtrl: 0` (récents), non vérifié sur matériel.
+- `supported_options` des fonctionnalités `air-conditioning` : valeurs **entières** (colonne
+  `INTEGER` de `t_device_feature_supported_option`), libellé non vide ; le front traduit par la
+  valeur et garde le libellé en repli.
+
+**Choix de conception**
+
+- Une fonction optionnelle (`Lig`, `SvSt`, `StHt`, `Blo`, `SwhSlp`, `Health`, `SwingLfRig`, sonde)
+  n'est publiée que si le statut la renvoie ; les capacités ne font que croître (gardées dans
+  `/data`), jamais de fonctionnalité retirée.
+- `should_poll: true` + 60 s en repli ; le minuteur du hub (30 s) lit les appareils **ajoutés** ;
+  il ne saute une unité que si le `onPoll` du cœur l'a lue il y a moins d'une demi-période, et
+  `onPoll` saute une unité lue il y a moins de 90 % d'une période.
+- Injoignable après 2 lectures sans réponse : badge `unreachable`, derniers états gardés (une clim
+  injoignable n'est pas forcément éteinte), nouveau scan au plus toutes les 5 min.
+- Déclencheur `changed_outside_gladys` : marche, mode ou consigne changés hors de Gladys ; une
+  commande de Gladys met à jour l'état (`own: true`) et une lecture partie avant elle est jetée
+  (`commandSeq`). Un appareil qui « refuse l'appairage » doit encore répondre au scan, sinon il est
+  simplement injoignable.
+- Les clés ne sont jamais journalisées (`test/logs.test.js` le vérifie au niveau debug).

@@ -1,67 +1,183 @@
-# Template de démonstration
+# Gree
 
-Ceci est la documentation utilisateur de l'intégration. Gladys ré-héberge ce
-fichier et affiche un lien **Documentation** permanent vers lui dans l'écran
-de configuration (dans la langue de l'utilisateur, avec l'anglais en repli) —
-c'est au moment de configurer que l'utilisateur en a le plus besoin. Gardez
-les courtes indications d'accueil dans les blocs `section` du `config_schema`
-du manifest ; mettez ici le pas-à-pas détaillé (captures d'écran, dépannage…).
+Pilotez vos climatiseurs **Gree** depuis Gladys, sur votre réseau local :
+marche et arrêt, mode, consigne, vitesse de ventilation, balayage et les
+fonctions annexes de l'appareil. L'intégration fonctionne aussi avec les
+appareils Gree vendus sous d'autres marques et configurés dans l'application
+**Gree+**, par exemple Cooper & Hunter, Trane, Innova, Proklima, Tadiran,
+Heiwa, Ekokai ou Lessar. Elle apporte un widget de tableau de bord, un
+déclencheur de scène et deux actions de scène. Ni compte ni cloud : Gladys
+parle directement à chaque appareil, comme l'application Gree+ sur votre
+Wi-Fi.
 
-## Ce que vous obtenez
+> **Développée sans le matériel : vos retours sont bienvenus.** Cette
+> intégration a été écrite d'après les descriptions publiées du protocole
+> Gree et testée contre des appareils simulés, pas contre un vrai
+> climatiseur. Si quelque chose ne marche pas comme décrit, dites-le sur le
+> [forum Gladys](https://community.gladysassistant.com) ou dans les
+> [issues](https://github.com/guim31/gladys-gree/issues). Cette intégration
+> n'est pas affiliée à Gree.
 
-Six appareils de démonstration apparaissent après l'installation : une
-station météo (vraies données Open-Meteo), un interrupteur, une lampe
-variable, une prise connectée avec mesure de puissance, un détecteur de
-mouvement et une caméra.
+## Ce qu'il faut
 
-## Configuration
+- Gladys Assistant 5.1.0 ou plus récent.
+- Des climatiseurs équipés d'un module Wi-Fi Gree, déjà connectés à votre
+  Wi-Fi avec l'application **Gree+** (Gladys ne sait pas faire cette première
+  configuration), sur le même réseau que Gladys.
+- Rien d'autre : ni compte Gree, ni clé, ni accès à internet. L'intégration
+  s'appaire seule à chaque appareil, en local, et garde la clé que chacun lui
+  donne.
 
-1. Ouvrez l'onglet **Configuration** de l'intégration.
-2. Renseignez la **latitude** et la **longitude** que la station météo de
-   démonstration doit observer (Paris par défaut), et choisissez votre unité
-   de température. L'**intervalle de rafraîchissement** règle la fréquence
-   de lecture de la station météo et de la puissance de la prise : toutes
-   les 5 minutes par défaut, toutes les minutes au plus.
-3. Enregistrez : les appareils apparaissent dans l'onglet **Découverte**,
-   prêts à être ajoutés.
+## Installation
 
-Le réglage **Préférer la connexion locale** pilote la prise de
-démonstration : elle affiche en badge le canal réellement utilisé (local ou
-cloud), avec un point orange quand elle fonctionne en mode dégradé (local
-refusé, bascule cloud).
+1. Installez l'intégration depuis le catalogue de Gladys.
+2. Ouvrez sa **Configuration**. Rien n'est obligatoire ; les options sont :
+   - **Adresses IP des climatiseurs** : seulement pour les appareils que la
+     découverte automatique ne trouve pas, séparées par des virgules (par
+     exemple `192.168.1.60, 192.168.1.61`). Votre box liste l'adresse de
+     chaque appareil. Lui donner une adresse fixe dans la box est une bonne
+     idée.
+   - **Intervalle de rafraîchissement** : fréquence de lecture de chaque
+     appareil, 10, 15, 30 ou 60 secondes (30 par défaut). C'est le délai pour
+     que Gladys voie un changement fait avec la télécommande ou l'application
+     Gree+.
+   - **Bip aux commandes de Gladys** : les appareils bipent à chaque
+     commande, comme avec la télécommande. « Silencieux » leur demande de ne
+     pas le faire, appréciable dans une chambre ; certains firmwares
+     l'ignorent.
+   - **Langue des noms d'appareils** : anglais, français, allemand ou
+     espagnol (français par défaut). Les noms des fonctionnalités d'un
+     appareil sont donnés au moment où il est ajouté.
+3. Ouvrez l'onglet **Découverte** : chaque appareil trouvé apparaît, nommé
+   « Gree » suivi du nom donné dans l'application Gree+ (ou de la fin de son
+   adresse MAC). Ajoutez ceux que vous voulez. Le bouton **Rechercher les climatiseurs**
+   de l'écran de configuration relance la recherche et indique
+   ce qui a été trouvé.
 
-## Actions
+La découverte passe par Gladys lui-même (l'intégration tourne dans un
+conteneur isolé qui ne peut pas joindre votre réseau en diffusion) : Gladys
+envoie la recherche sur le port UDP 7000, celui du protocole Gree, et
+transmet les réponses. L'intégration parle ensuite directement à chaque
+appareil. Une nouvelle recherche a lieu toutes les 15 minutes, pour trouver
+les nouveaux appareils et suivre un appareil dont l'adresse a changé.
 
-- **Tester le fournisseur météo** — effectue une requête en direct vers
-  Open-Meteo et affiche la température et l'humidité actuelles sous le
-  bouton.
-- **Identifier un appareil** — choisissez un de vos appareils dans la liste
-  et il se signale (la lampe de démonstration « clignote » dans les logs).
+## Les appareils dans Gladys
+
+Un appareil par climatiseur, avec ces fonctionnalités :
+
+| Fonctionnalité          | Ce qu'elle fait                                                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Climatiseur             | Marche et arrêt.                                                                                                         |
+| Mode                    | Auto, froid, chaud, déshumidification, ventilation.                                                                      |
+| Température de consigne | De 16 à 30 °C, par degré entier.                                                                                         |
+| Température intérieure  | La température mesurée par l'appareil, s'il a une sonde (lecture seule).                                                 |
+| Vitesse de ventilation  | Auto, basse, moyenne-basse, moyenne, moyenne-haute, haute, plus « Silencieux » et « Turbo », qui priment sur la vitesse. |
+| Balayage vertical       | Par défaut, balayage, ou l'une de cinq positions fixes.                                                                  |
+| Balayage horizontal     | Pareil, sur les appareils à volets latéraux motorisés.                                                                   |
+| Lumière de l'écran      | L'afficheur et les voyants de l'unité intérieure.                                                                        |
+| Économie d'énergie      | Le mode économie d'énergie de l'appareil.                                                                                |
+| Hors-gel 8 °C           | Maintient la pièce à 8 °C, en mode chaud (le « 8 °C » de la télécommande).                                               |
+| Mode sommeil            | La courbe de nuit de l'appareil : la consigne dérive doucement pendant la nuit.                                          |
+| X-Fan (séchage)         | Laisse tourner la ventilation un moment après l'arrêt, pour sécher l'échangeur (modes froid et déshumidification).       |
+| Health (ioniseur)       | L'ioniseur (« Health » ou « plasma froid »), sur les appareils qui en ont un.                                            |
+
+Une fonctionnalité n'apparaît que si l'appareil indique la fonction
+correspondante : un appareil sans sonde n'a pas de température intérieure, un
+appareil sans volets latéraux motorisés pas de balayage horizontal. Si une
+fonction apparaît plus tard (une sonde qui répond en retard), l'onglet
+Découverte propose de mettre l'appareil à jour. Une fonction que l'appareil
+annonce sans vraiment l'avoir (cela arrive) reste simplement sans effet.
+
+Les changements faits avec la télécommande ou l'application Gree+ arrivent
+dans Gladys dans l'intervalle de rafraîchissement. Un appareil qui ne répond
+plus (coupure de courant, Wi-Fi perdu) garde ses dernières valeurs dans
+Gladys, avec un badge « injoignable », jusqu'à ce qu'il réponde de nouveau.
+
+## Widget du tableau de bord
+
+Le widget **Climatiseurs** montre sur une seule carte tous les appareils Gree
+ajoutés à Gladys : pour chacun, son mode, sa consigne et la température de la
+pièce, ou « Arrêt », ou « Ne répond pas ». Son bouton **Tout éteindre** éteint
+d'un geste tous les appareils allumés : en partant, en allant se coucher. Le
+widget n'a pas de réglages.
 
 ## Scènes
 
-L'intégration ajoute ses propres cartes à l'éditeur de scènes (Gladys 5.1
-ou plus récent), dans la catégorie **Intégrations** :
+### Déclencheur
 
-- **Mouvement détecté** (déclencheur) — lance la scène quand un détecteur
-  de démonstration voit bouger quelque chose. Choisissez éventuellement le
-  détecteur et ce qui a bougé (personne, animal) ; laissés vides, toute
-  détection correspond. Les actions suivantes peuvent lire ce qui a bougé
-  avec `{{triggerEvent.data.target}}`.
-- **Identifier un appareil** (action) — fait se signaler l'appareil choisi.
-  Elle indique si l'appareil a pu se signaler, pour que les actions
-  suivantes puissent en dépendre.
+**Climatiseur modifié hors de Gladys** : quelqu'un a allumé ou éteint un
+appareil, ou changé son mode ou sa consigne, avec la télécommande ou
+l'application Gree+. Ce que Gladys fait elle-même ne le déclenche jamais :
+une scène peut donc réagir à la télécommande sans réagir à ses propres
+commandes. Filtres (tous facultatifs) : le climatiseur, et le changement :
+**Allumé**, **Éteint**, **Mode ou consigne changé**. Variables disponibles
+pour les actions : le changement (`turned_on`, `turned_off`, `settings`), la
+marche (`on`, `off`), le mode (`auto`, `cool`, `heat`, `dry`, `fan`), la
+consigne et la température intérieure en °C.
 
-## Tableau de bord
+### Actions
 
-Ajoutez le widget **État de la démo** à un tableau de bord : il affiche en
-direct la température de la station météo et la puissance de la prise du
-bureau, la connexion utilisée par la prise (en orange si dégradée) et la
-position observée. Son bouton **Identifier la lampe** fait se signaler la
-lampe de démonstration.
+- **Allumer avec des réglages** : allume un climatiseur avec un mode, et si
+  besoin une consigne (16 à 30 °C) et une vitesse de ventilation, en une seule
+  commande, donc un seul bip. Elle renvoie la température intérieure, pour une
+  notification. Les actions habituelles de Gladys sur les fonctionnalités de
+  l'appareil marchent aussi, une commande chacune.
+- **Éteindre tous les climatiseurs** : éteint tous les appareils Gree ajoutés
+  à Gladys qui sont allumés et répondent, y compris ceux ajoutés après
+  l'écriture de la scène. Elle renvoie le nombre d'appareils éteints.
+
+### Idées de scènes
+
+- **Départ de la maison** : quand la dernière personne part, « Éteindre tous
+  les climatiseurs », puis envoyer un message avec le nombre d'appareils
+  éteints.
+- **Rafraîchir la chambre avant le coucher** : à 22 h en été, si la chambre
+  dépasse 26 °C, « Allumer avec des réglages » sur le climatiseur de la
+  chambre : froid, 25 °C, ventilation silencieuse.
+- **Quelqu'un a pris la télécommande** : sur « Climatiseur modifié hors de
+  Gladys », changement « Allumé », alors qu'un détecteur indique la fenêtre
+  ouverte : envoyer le message « La clim est allumée fenêtre ouverte ».
 
 ## Dépannage
 
-L'intégration journalise tout ce qu'elle fait : consultez les logs de
-l'intégration depuis l'interface Gladys (ou `docker logs` sur l'hôte) avec
-`LOG_LEVEL=debug` pour le détail complet.
+- **Aucun appareil trouvé** : vérifiez que l'appareil est connecté avec
+  l'application Gree+ et sur le même réseau que Gladys (pas sur un Wi-Fi
+  invité), puis appuyez sur **Rechercher les climatiseurs**. S'il manque
+  toujours, saisissez son adresse IP dans la configuration. Le compte rendu
+  sous le bouton indique si la découverte automatique est indisponible.
+- **« refuse l'appairage »** : l'appareil répond mais refuse de donner sa
+  clé. Redémarrez-le (coupez-le au disjoncteur une minute), puis relancez la
+  recherche.
+- **Ne répond pas** : l'appareil est coupé au disjoncteur, hors de portée du
+  Wi-Fi, ou a changé d'adresse. Une recherche le retrouve à sa nouvelle
+  adresse ; une adresse fixe dans la box évite le problème.
+- **Appareil appairé de nouveau avec l'application Gree+** : un appareil
+  réinitialisé ou ajouté de nouveau dans l'application reçoit une nouvelle
+  clé. L'intégration s'en aperçoit et s'appaire de nouveau toute seule.
+- **L'appareil bipe à chaque commande** : choisissez « Silencieux » pour
+  **Bip aux commandes de Gladys**. Certains firmwares l'ignorent.
+- **Les journaux** : l'intégration n'écrit que sa vie (démarrage, appareils
+  trouvés, perdus et retrouvés, erreurs) et une ligne par commande. Plus de
+  détail avec `LOG_LEVEL=debug`. Les clés des appareils n'apparaissent jamais
+  dans les journaux.
+
+## Limites
+
+- Développée sans le matériel : le protocole est celui qu'utilise
+  l'application Gree+ sur le réseau local, tel que décrit par des projets
+  libres, mais l'intégration n'a pas encore été essayée sur un vrai appareil.
+- La première configuration Wi-Fi d'un appareil demande l'application Gree+.
+- Les appareils derrière une passerelle multi-split ou VRF (un module Wi-Fi
+  pour plusieurs unités intérieures) ne sont pas pris en charge, ni les
+  déshumidificateurs Gree.
+- Degrés entiers seulement, en Celsius ; un appareil qui affiche en
+  Fahrenheit garde son unité d'affichage.
+- La température intérieure est celle de la sonde de l'appareil : près du
+  plafond, souvent un peu plus chaude que la pièce.
+- Les appareils ne signalent pas leurs changements : Gladys les lit à
+  l'intervalle de rafraîchissement, donc un changement fait avec la
+  télécommande apparaît dans ce délai.
+- Requêtes : un court échange UDP par appareil à chaque rafraîchissement,
+  rien sur internet ; il n'y a pas de quota.
+- Les clés des appareils sont gardées dans le volume de données de
+  l'intégration (`/data/gree-state.json`), lisible par elle seule.
